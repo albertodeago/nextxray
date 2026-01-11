@@ -1,0 +1,16 @@
+{
+  "type": "module",
+  "scripts": {
+    "run": "tsc && node dist/index.js"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.27.3",
+    "@babel/traverse": "^7.27.3"
+  },
+  "devDependencies": {
+    "@types/babel__parser": "^7.0.0",
+    "@types/babel__traverse": "^7.20.7",
+    "@types/node": "22.15.24",
+    "typescript": "^5.8.3"
+  }
+}

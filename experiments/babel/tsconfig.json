@@ -1,0 +1,46 @@
+{
+  "compilerOptions": {
+    /* Base Options: */
+    "esModuleInterop": true, // Enables compatibility with CommonJS modules like Babel's.
+    "skipLibCheck": true, // Speeds up compilation by skipping type checking of declaration files.
+    "target": "ES2020", // Target modern ECMAScript version compatible with recent Node.js.
+    "allowJs": false, // Disallow JavaScript files to be compiled (optional, but good for pure TS projects).
+    "resolveJsonModule": true, // Allows importing .json files.
+    "moduleDetection": "force", // Ensures files are treated as modules.
+
+    /* Strictness: */
+    "strict": true, // Enable all strict type-checking options.
+    "noUnusedLocals": true, // Report errors on unused local variables.
+    "noUnusedParameters": true, // Report errors on unused parameters.
+    "noFallthroughCasesInSwitch": true, // Report errors for fallthrough cases in switch statement.
+    "noImplicitReturns": true, // Report error when not all code paths in function return a value.
+
+    /* Module Resolution: */
+    "module": "NodeNext",
+    "moduleResolution": "nodenext", // Specifies module resolution strategy. 'node' is standard for Node.js.
+    // "baseUrl": "./", // Base directory to resolve non-relative module names (optional).
+    // "paths": {}, // Path mapping (optional, for aliasing modules).
+
+    /* Emitting Files: */
+    "outDir": "./dist", // Redirect output structure to the directory.
+    "sourceMap": true, // Generate corresponding '.map' file for debugging.
+    // "declaration": true, // Generates corresponding '.d.ts' file (if creating a library).
+    // "removeComments": true, // Do not emit comments to output.
+
+    /* Type Checking: */
+    "lib": ["ESNext"], // List of library files to be included in the compilation. ESNext for modern features.
+                       // No "DOM" lib as this is a Node.js script.
+
+    /* Advanced: */
+    "forceConsistentCasingInFileNames": true, // Ensure that casing is correct in imports.
+    "allowSyntheticDefaultImports": true // Allow default imports from modules with no default export (for interop).
+  },
+  "include": [
+    "*.ts" // Include all .ts files in the root directory.
+    // You might want to be more specific, e.g., "src/**/*.ts" or ["yourScriptName.ts"]
+  ],
+  "exclude": [
+    "node_modules", // Exclude the node_modules directory.
+    "dist" // Exclude the output directory.
+  ]
+}

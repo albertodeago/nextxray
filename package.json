@@ -1,5 +1,5 @@
 {
-  "name": "my-turborepo",
+  "name": "nextjs-component-scanner",
   "private": true,
   "scripts": {
     "build": "turbo run build",
@@ -9,14 +9,14 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
-    "prettier": "^3.7.4",
-    "turbo": "^2.7.3",
+    "prettier": "3.7.4",
+    "turbo": "2.7.3",
     "typescript": "5.9.2"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
-  "packageManager": "npm@10.9.0",
+  "packageManager": "npm@11.6.2",
   "workspaces": [
     "apps/*",
     "packages/*"
