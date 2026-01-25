@@ -2,7 +2,7 @@
 
 ## Goal
 
-Create a Node.js and Browser compatible package that accepts React component source code (as a string) and extracts information about used child components.
+Create a Node.js and Browser compatible package (isomorphic) that accepts React component source code (as a string) and extracts information about used child components.
 
 ## Architecture
 
@@ -12,7 +12,7 @@ Create a Node.js and Browser compatible package that accepts React component sou
 
 ## Todo List
 
-- [ ] **Setup Dependencies**: Install `@babel/parser`, `@babel/traverse`, `@babel/types` in `packages/scanner`.
+- [x] **Setup Dependencies**: Install `@babel/parser`, `@babel/traverse`, `@babel/types` in `packages/scanner`.
 - [ ] **Define Types**: Create TypeScript interfaces for the scanner output (e.g., `ComponentInfo`, `ScanResult`).
 - [ ] **Implement Core Scanner**:
   - [ ] Setup parser to handle TypeScript and JSX.
