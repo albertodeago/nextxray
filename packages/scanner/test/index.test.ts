@@ -17,4 +17,18 @@ describe("scanner", () => {
       isClientComponent: true,
     });
   });
+
+  it("given a server-component, it recognizes it", () => {
+    const fixturePath = path.join(
+      process.cwd(),
+      "test/fixtures/server-component.tsx",
+    );
+    const code = fs.readFileSync(fixturePath, "utf-8");
+
+    const result = scan(code);
+
+    expect(result).toMatchObject({
+      isClientComponent: false,
+    });
+  });
 });
