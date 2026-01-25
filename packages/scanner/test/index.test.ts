@@ -186,4 +186,55 @@ describe("scanner", () => {
       ]),
     );
   });
+
+  it("given a component with dynamic imports, it detects them", () => {
+    const fixturePath = path.join(
+      process.cwd(),
+      "test/fixtures/dynamic-imports.tsx",
+    );
+    const code = fs.readFileSync(fixturePath, "utf-8");
+
+    const result = scan({ code });
+
+    expect(result).toMatchObject({
+      importedComponents: expect.arrayContaining([
+        {
+          name: "LazyComponent",
+          source: "./lazy-component",
+          // For dynamic imports, we often treat them as default imports from the module
+          type: "default",
+          importedName: "default",
+        },
+        {
+          name: "ReactLazyComponent",
+          source: "./react-lazy-component",
+          type: "default",
+          importedName: "default",
+        },
+      ]),
+    });
+  });
+
+  it("given a complex default export (e.g. HOC), it detects it", () => {
+    const fixturePath = path.join(
+      process.cwd(),
+      "test/fixtures/complex-export.tsx",
+    );
+    const code = fs.readFileSync(fixturePath, "utf-8");
+
+    const result = scan({ code });
+
+    expect(result).toMatchObject({
+      component: {
+        exportType: "default",
+        // Name might be null or inferred, but we mainly care that export is detected
+      },
+      exports: expect.arrayContaining([
+        {
+          name: "default",
+          type: "default",
+        },
+      ]),
+    });
+  });
 });

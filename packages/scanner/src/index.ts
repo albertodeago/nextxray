@@ -67,7 +67,7 @@ export const scan = ({ code }: Input): AnalyzedComponent => {
 
   const state = {
     exportedComponent: null as {
-      name: string;
+      name: string | null;
       exportType: "default" | "named";
     } | null,
   };
@@ -112,7 +112,81 @@ export const scan = ({ code }: Input): AnalyzedComponent => {
     VariableDeclarator(path) {
       // const MyComp = ...
       if (path.node.id.type === "Identifier") {
-        localDefinitions.add(path.node.id.name);
+        let isHasDynamicImport = false;
+
+        // Check for const Lazy = dynamic(() => import('./foo'))
+        // or const Lazy = React.lazy(() => import('./foo'))
+        if (
+          path.node.init?.type === "CallExpression" &&
+          (path.node.init.callee.type === "Identifier" || // dynamic(...)
+            path.node.init.callee.type === "MemberExpression") // React.lazy(...)
+        ) {
+          const callee = path.node.init.callee;
+          const isDynamic =
+            callee.type === "Identifier" && callee.name === "dynamic";
+          const isReactLazy =
+            callee.type === "MemberExpression" &&
+            callee.object.type === "Identifier" &&
+            callee.object.name === "React" &&
+            callee.property.type === "Identifier" &&
+            callee.property.name === "lazy";
+
+          if (isDynamic || isReactLazy) {
+            // Traverse the first argument to find import()
+            const arg = path.node.init.arguments[0];
+            if (arg) {
+              // We need to find `import("source")` inside the arrow function
+              // Simple heuristic: Look for string literal inside CallExpression named "import"
+              // Since we are inside a visitor, we can't easily traverse *down* with the same visitor.
+              // We can rely on manual inspection of the AST node structure for typical cases.
+              // Typical case: () => import('./foo')
+              // AST: ArrowFunctionExpression -> body: CallExpression(import, [StringLiteral])
+
+              let importSource: string | null = null;
+
+              const getLocationFromImportCall = (node: any) => {
+                if (
+                  node.type === "CallExpression" &&
+                  node.callee.type === "Import"
+                ) {
+                  return node.arguments[0]?.value;
+                }
+                return null;
+              };
+
+              if (
+                arg.type === "ArrowFunctionExpression" ||
+                arg.type === "FunctionExpression"
+              ) {
+                if (arg.body.type === "CallExpression") {
+                  importSource = getLocationFromImportCall(arg.body);
+                } else if (arg.body.type === "BlockStatement") {
+                  // () => { return import('./foo') }
+                  // This is more complex, let's look for the first ReturnStatement
+                  const returnStmt = arg.body.body.find(
+                    (stmt: any) => stmt.type === "ReturnStatement",
+                  ) as any;
+                  if (returnStmt?.argument) {
+                    importSource = getLocationFromImportCall(returnStmt.argument);
+                  }
+                }
+              }
+
+              if (importSource) {
+                isHasDynamicImport = true;
+                exactImports.set(path.node.id.name, {
+                  source: importSource,
+                  type: "default",
+                  importedName: "default",
+                });
+              }
+            }
+          }
+        }
+
+        if (!isHasDynamicImport) {
+          localDefinitions.add(path.node.id.name);
+        }
       }
     },
     FunctionDeclaration(path) {
@@ -149,6 +223,14 @@ export const scan = ({ code }: Input): AnalyzedComponent => {
         // export default function NewFunc() {}
         state.exportedComponent = {
           name: path.node.declaration.id.name,
+          exportType: "default",
+        };
+      } else if (path.node.declaration.type === "CallExpression") {
+        // export default withAuth(Profile)
+        // export default dynamic(...)
+        // We might not be able to infer a name easily, but we know it's a default export
+        state.exportedComponent = {
+          name: null, // Anonymous / Wrapped component
           exportType: "default",
         };
       }
