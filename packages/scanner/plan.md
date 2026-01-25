@@ -38,18 +38,67 @@ We need to stitch the single-file scans into a graph. To keep this isomorphic, w
 
 ### Todo List
 
-- [ ] **Define Host Interface**:
+- [x] **Define Host Interface**:
   - `read(path: string): Promise<string>`: Fetch file content.
   - `resolve(contextPath: string, importPath: string): Promise<string | null>`: Resolve an import path (e.g. `./button` -> `/abs/path/button.tsx`).
-- [ ] **Define Tree Types**:
+- [x] **Define Tree Types**:
   - `ComponentNode`: Contains `id` (path), `metadata` (from scanner), and `children` (edges).
-- [ ] **Implement Crawler**:
+- [x] **Implement Crawler**:
   - Input: `entryPath` + `ScannerHost`.
   - Logic: Recursive or Queue-based traversal.
   - Features:
     - Cycle detection (visited set).
     - Concurrency control (optional, but good for performance).
-- [ ] **Implement Node.js Adapter (Wrappers)**:
+- [x] **Implement Node.js Adapter (Wrappers)**:
   - Create a reference implementation of `ScannerHost` for Node.js.
   - Use `fs` for reading.
   - Handle resolution (extensions `.tsx`, `.ts`, `index` files, `tsconfig paths` aliases).
+
+## Phase 3: Next.js Project Scanner
+
+We now have the tools to analyze a single component tree. We need to scale this up to understand a full Next.js application by analyzing its directory structure.
+
+### New Goals
+
+- Automatically discover entry points (`page.tsx`, `layout.tsx`) in the `app/` directory.
+- Perform efficient bulk scanning (reusing shared component analysis).
+- Aggregate data to answer project-wide questions.
+
+### Todo List
+
+- [ ] **Implement File Discovery**:
+  - Create logic to recursively find all `page.tsx` and `layout.tsx` files in a given directory (`app/`).
+- [ ] **Implement Project Scanner**:
+  - Input: Project Root Path.
+  - Logic:
+    - Find all standard Next.js entry points.
+    - Run the `Crawler` on each entry point.
+    - Use a shared cache/visited map to ensure shared components (like `ui/button`) are only scanned once across the whole project.
+- [ ] **Data Aggregation**:
+  - Create a structure to represent the "Application Map" (Routes -> Component Trees).
+  - Calculate stats: Client vs Server component ratio, most used shared components.
+- [ ] **CLI Update**:
+  - Update CLI to accept a directory.
+  - If directory -> Run Project Scan.
+  - If file -> Run Single Crawler.
+
+## Phase 3.5: Browser Compatibility Safety Check
+
+Ensure we haven't accidentally coupled the core logic to Node.js APIs.
+
+- [ ] **Browser Test**:
+  - Create a test that runs the `scan` function (without `NodeHost`) in a simulated browser environment (or just verify imports).
+  - Ensure no `fs`, `path`, or `enhanced-resolve` imports leak into the core `scanner/index.ts` or visitors.
+
+## Phase 4: Browser Implementation
+
+Bring the scanner to the web using the File System Access API.
+
+### Todo List
+
+- [ ] **Browser Host Adapter**:
+  - Implement `ScannerHost` using `FileSystemDirectoryHandle`.
+  - Implement a basic resolution strategy for the browser (mapping paths to handles).
+- [ ] **Web UI**:
+  - Simple React UI to pick a folder.
+  - Visualize the dependency graph (D3.js or React Flow?).
