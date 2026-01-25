@@ -13,8 +13,17 @@ type AnalyzedComponent = {
   };
   importedComponents: {
     name: string;
+    importedName: string;
     source: string;
     type: "default" | "named" | "namespace";
+  }[];
+  exports: {
+    name: string;
+    type: "default" | "named" | "namespace";
+    reExport?: {
+      source: string;
+      importedName: string;
+    };
   }[];
   localComponents: string[];
 };
@@ -47,7 +56,11 @@ export const scan = ({ code }: Input): AnalyzedComponent => {
   // Sets to track identifiers found during traversal
   const exactImports = new Map<
     string,
-    { source: string; type: "default" | "named" | "namespace" }
+    {
+      source: string;
+      type: "default" | "named" | "namespace";
+      importedName: string;
+    }
   >();
   const localDefinitions = new Set<string>(); // Names of locally defined variables/functions
   const usedJsxNames = new Set<string>(); // Names of components actually used in JSX
@@ -59,6 +72,8 @@ export const scan = ({ code }: Input): AnalyzedComponent => {
     } | null,
   };
 
+  const exports: AnalyzedComponent["exports"] = [];
+
   // Traverse the AST to populate our sets
   traverse(ast as any, {
     // 1. Collect Imports
@@ -67,11 +82,28 @@ export const scan = ({ code }: Input): AnalyzedComponent => {
       // Iterate over all specifiers in an import statement
       path.node.specifiers.forEach((specifier) => {
         if (specifier.type === "ImportDefaultSpecifier") {
-          exactImports.set(specifier.local.name, { source, type: "default" });
+          exactImports.set(specifier.local.name, {
+            source,
+            type: "default",
+            importedName: "default",
+          });
         } else if (specifier.type === "ImportNamespaceSpecifier") {
-          exactImports.set(specifier.local.name, { source, type: "namespace" });
+          exactImports.set(specifier.local.name, {
+            source,
+            type: "namespace",
+            importedName: "*",
+          });
         } else if (specifier.type === "ImportSpecifier") {
-          exactImports.set(specifier.local.name, { source, type: "named" });
+          const importedName =
+            specifier.imported.type === "Identifier"
+              ? specifier.imported.name
+              : specifier.imported.value;
+
+          exactImports.set(specifier.local.name, {
+            source,
+            type: "named",
+            importedName,
+          });
         }
       });
     },
@@ -90,7 +122,20 @@ export const scan = ({ code }: Input): AnalyzedComponent => {
       }
     },
 
+    ExportAllDeclaration(path) {
+      exports.push({
+        name: "*",
+        type: "namespace",
+        reExport: {
+          source: path.node.source.value,
+          importedName: "*",
+        },
+      });
+    },
+
     ExportDefaultDeclaration(path) {
+      exports.push({ name: "default", type: "default" });
+
       if (path.node.declaration.type === "Identifier") {
         // export default ExistingVar
         state.exportedComponent = {
@@ -110,29 +155,67 @@ export const scan = ({ code }: Input): AnalyzedComponent => {
     },
 
     ExportNamedDeclaration(path) {
-      if (path.node.declaration?.type === "VariableDeclaration") {
-        // export const A = ...
-        path.node.declaration.declarations.forEach((decl) => {
-          if (decl.id.type === "Identifier") {
-            // If we haven't found a component yet, take the first named export
-            // This is a heuristic: "First exported component is the main one"
+      if (path.node.source) {
+        // export { A } from './b'
+        const source = path.node.source.value;
+        path.node.specifiers.forEach((specifier) => {
+          if (specifier.type === "ExportSpecifier") {
+            const exportedName =
+              specifier.exported.type === "Identifier"
+                ? specifier.exported.name
+                : specifier.exported.value;
+            const localName = specifier.local.name;
+            exports.push({
+              name: exportedName,
+              type: "named",
+              reExport: {
+                source,
+                importedName: localName,
+              },
+            });
+          }
+        });
+      } else {
+        if (path.node.declaration?.type === "VariableDeclaration") {
+          // export const A = ...
+          path.node.declaration.declarations.forEach((decl) => {
+            if (decl.id.type === "Identifier") {
+              exports.push({ name: decl.id.name, type: "named" });
+              // If we haven't found a component yet, take the first named export
+              // This is a heuristic: "First exported component is the main one"
+              if (!state.exportedComponent) {
+                state.exportedComponent = {
+                  name: decl.id.name,
+                  exportType: "named",
+                };
+              }
+            }
+          });
+        } else if (path.node.declaration?.type === "FunctionDeclaration") {
+          // export function A() ...
+          if (path.node.declaration.id) {
+            exports.push({
+              name: path.node.declaration.id.name,
+              type: "named",
+            });
             if (!state.exportedComponent) {
               state.exportedComponent = {
-                name: decl.id.name,
+                name: path.node.declaration.id.name,
                 exportType: "named",
               };
             }
           }
-        });
-      } else if (path.node.declaration?.type === "FunctionDeclaration") {
-        // export function A() ...
-        if (path.node.declaration.id) {
-          if (!state.exportedComponent) {
-            state.exportedComponent = {
-              name: path.node.declaration.id.name,
-              exportType: "named",
-            };
-          }
+        } else if (path.node.specifiers) {
+          // export { A, B }
+          path.node.specifiers.forEach((specifier) => {
+            if (specifier.type === "ExportSpecifier") {
+              const exportedName =
+                specifier.exported.type === "Identifier"
+                  ? specifier.exported.name
+                  : specifier.exported.value;
+              exports.push({ name: exportedName, type: "named" });
+            }
+          });
         }
       }
     },
@@ -171,6 +254,7 @@ export const scan = ({ code }: Input): AnalyzedComponent => {
         const importInfo = exactImports.get(root)!;
         importedComponents.push({
           name: name,
+          importedName: importInfo.importedName,
           source: importInfo.source,
           type: "namespace",
         });
@@ -182,6 +266,7 @@ export const scan = ({ code }: Input): AnalyzedComponent => {
         const importInfo = exactImports.get(name)!;
         importedComponents.push({
           name: name,
+          importedName: importInfo.importedName,
           source: importInfo.source,
           type: importInfo.type,
         });
@@ -200,6 +285,7 @@ export const scan = ({ code }: Input): AnalyzedComponent => {
       exportType: state.exportedComponent?.exportType ?? null,
       isClientComponent,
     },
+    exports,
     importedComponents,
     localComponents,
   };

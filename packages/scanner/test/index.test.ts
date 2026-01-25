@@ -56,6 +56,7 @@ describe("scanner", () => {
       importedComponents: [
         {
           name: "Button",
+          importedName: "Button",
           source: "./client-component",
           type: "named",
         },
@@ -79,6 +80,7 @@ describe("scanner", () => {
       importedComponents: [
         {
           name: "MyButton", // The local name used in JSX
+          importedName: "Button", // The original name exported from the source
           source: "./client-component",
           type: "named",
         },
@@ -99,6 +101,7 @@ describe("scanner", () => {
       importedComponents: [
         {
           name: "Button",
+          importedName: "default",
           source: "./client-component",
           type: "default",
         },
@@ -119,6 +122,7 @@ describe("scanner", () => {
       importedComponents: [
         {
           name: "UI.Button",
+          importedName: "*",
           source: "./ui-library",
           type: "namespace",
         },
@@ -138,5 +142,48 @@ describe("scanner", () => {
     expect(result).toMatchObject({
       localComponents: ["LocalButton"],
     });
+  });
+
+  it("given a barrel file, it detects re-exports", () => {
+    const fixturePath = path.join(
+      process.cwd(),
+      "test/fixtures/barrel-file.tsx",
+    );
+    const code = fs.readFileSync(fixturePath, "utf-8");
+
+    const result = scan({ code });
+
+    expect(result.exports).toEqual(
+      expect.arrayContaining([
+        {
+          name: "*",
+          type: "namespace",
+          reExport: {
+            source: "./button",
+            importedName: "*",
+          },
+        },
+        {
+          name: "Card",
+          type: "named",
+          reExport: {
+            source: "./card",
+            importedName: "Card",
+          },
+        },
+        {
+          name: "Modal",
+          type: "named",
+          reExport: {
+            source: "./modal",
+            importedName: "default",
+          },
+        },
+        {
+          name: "Local",
+          type: "named",
+        },
+      ]),
+    );
   });
 });
