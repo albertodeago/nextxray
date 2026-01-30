@@ -47,4 +47,6 @@ export type ProjectStats = {
 export type ProjectScanResult = {
   routes: RouteEntry[];
   stats: ProjectStats;
+  // All scan results for tree lookup (Record instead of Map for JSON serialization)
+  results: Record<string, ScanResult>;
 };

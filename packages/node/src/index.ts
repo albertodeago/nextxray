@@ -1,5 +1,6 @@
 // Node.js specific implementations
 export { NodeHost } from "./node-host.js";
+export type { NodeHostOptions } from "./node-host.js";
 export { ProjectScanner } from "./project-scanner.js";
 export { discoverEntryPoints } from "./node-discovery.js";
 

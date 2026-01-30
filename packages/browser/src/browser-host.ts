@@ -1,8 +1,16 @@
 import type { ScannerHost } from "@nextxray/core";
+import {
+  createPathAliasResolver,
+  parseTsconfig,
+  mergeTsconfigs,
+  type PathAliasResolver,
+  type ParsedTsconfig,
+} from "@nextxray/core";
 
 export interface BrowserHostOptions {
   rootHandle: FileSystemDirectoryHandle;
   rootPath?: string;
+  tsconfigPath?: string; // e.g., "tsconfig.json"
 }
 
 const EXTENSIONS = [".tsx", ".ts", ".jsx", ".js"];
@@ -11,12 +19,15 @@ const INDEX_FILES = EXTENSIONS.map((ext) => `index${ext}`);
 export class BrowserHost implements ScannerHost {
   private rootHandle: FileSystemDirectoryHandle;
   private rootPath: string;
+  private tsconfigPath?: string;
   private fileCache = new Map<string, string>();
   private handleCache = new Map<string, FileSystemFileHandle>();
+  private aliasResolver: PathAliasResolver | null | undefined = undefined; // undefined = not loaded yet
 
   constructor(options: BrowserHostOptions) {
     this.rootHandle = options.rootHandle;
     this.rootPath = options.rootPath ?? "/";
+    this.tsconfigPath = options.tsconfigPath;
   }
 
   async readFile(filePath: string): Promise<string> {
@@ -36,7 +47,24 @@ export class BrowserHost implements ScannerHost {
   }
 
   async resolve(source: string, importer: string): Promise<string | null> {
-    // Skip external packages (not relative paths)
+    // Lazy load alias resolver on first call
+    if (this.aliasResolver === undefined) {
+      this.aliasResolver = await this.loadAliasResolver();
+    }
+
+    // Try alias resolution first
+    if (this.aliasResolver) {
+      const aliasedPath = this.aliasResolver.resolve(source);
+      if (aliasedPath) {
+        // Try to resolve the aliased path with extensions
+        const resolved = await this.tryResolve(aliasedPath);
+        if (resolved) {
+          return resolved;
+        }
+      }
+    }
+
+    // Skip external packages (not relative paths, not aliases)
     if (!source.startsWith(".") && !source.startsWith("/")) {
       return null;
     }
@@ -50,6 +78,94 @@ export class BrowserHost implements ScannerHost {
     // Try to find the file with various extensions
     const result = await this.tryResolve(resolvedPath);
     return result;
+  }
+
+  private async loadAliasResolver(): Promise<PathAliasResolver | null> {
+    try {
+      const config = await this.loadTsconfig();
+      if (!config?.compilerOptions?.paths) {
+        return null;
+      }
+
+      // baseUrl is relative to rootPath in browser context
+      const baseUrl = config.compilerOptions.baseUrl
+        ? this.resolvePath(this.rootPath, config.compilerOptions.baseUrl)
+        : this.rootPath;
+
+      return createPathAliasResolver({
+        baseUrl,
+        paths: config.compilerOptions.paths,
+      });
+    } catch {
+      // Graceful fallback on error
+      return null;
+    }
+  }
+
+  private async loadTsconfig(): Promise<ParsedTsconfig | null> {
+    // Try default tsconfig paths if not specified
+    const candidates = this.tsconfigPath
+      ? [this.tsconfigPath]
+      : ["tsconfig.json", "tsconfig.app.json"];
+
+    for (const candidate of candidates) {
+      const fullPath = this.resolvePath(this.rootPath, candidate);
+      try {
+        const content = await this.readFile(fullPath);
+        const config = parseTsconfig(content);
+
+        // Handle extends (limited to same directory in browser)
+        if (config.extends) {
+          const resolved = await this.loadTsconfigWithExtends(config, fullPath);
+          return resolved;
+        }
+
+        return config;
+      } catch {
+        // File doesn't exist, try next
+      }
+    }
+
+    return null;
+  }
+
+  private async loadTsconfigWithExtends(
+    config: ParsedTsconfig,
+    configPath: string
+  ): Promise<ParsedTsconfig> {
+    if (!config.extends) {
+      return config;
+    }
+
+    // Only support relative extends in same directory for browser
+    if (!config.extends.startsWith(".")) {
+      // Can't resolve node_modules in browser context
+      return config;
+    }
+
+    const configDir = this.dirname(configPath);
+    let extendsPath = this.resolvePath(configDir, config.extends);
+
+    // Add .json if missing
+    if (!extendsPath.endsWith(".json")) {
+      extendsPath += ".json";
+    }
+
+    try {
+      const parentContent = await this.readFile(extendsPath);
+      const parentConfig = parseTsconfig(parentContent);
+
+      // Recursively handle parent's extends
+      const resolvedParent = await this.loadTsconfigWithExtends(
+        parentConfig,
+        extendsPath
+      );
+
+      return mergeTsconfigs(resolvedParent, config);
+    } catch {
+      // Parent not found, just return current config
+      return config;
+    }
   }
 
   private async getFileHandle(

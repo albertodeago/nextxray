@@ -1,243 +1,58 @@
-# Phase 4: Browser Implementation Plan
+# Next.js X-Ray - Future Plans
 
-## Package Structure
+## Current State
 
-```
-packages/browser/    → @nextxray/browser
-  src/
-    browser-host.ts      # ScannerHost impl using FileSystemDirectoryHandle
-    browser-discovery.ts # Find page.tsx/layout.tsx via directory handles
-    utils.ts             # Path utilities for browser
-    index.ts             # Exports
-  test/
-  package.json
-  tsconfig.json
+Phase 4 (Browser MVP) is complete. The scanner works in the browser via File System Access API.
 
-apps/web/
-  app/
-    page.tsx             # Main UI: folder picker + results display
-    scanner/             # Scanner page/route if needed
-  components/
-    ProjectPicker.tsx    # "Select Project" button + FileSystem API
-    ScanResults.tsx      # Display scan results
-  hooks/
-    useScanner.ts        # Orchestrates: pick → detect → scan → results
-```
+## Known Limitations
 
-## Dependency Graph
-
-```
-cli → node → core
-browser → core
-apps/web → browser → core
-```
-
-## @nextxray/browser Tasks
-
-### 1. Package Setup
-- Create `packages/browser/` dir
-- `package.json`: name `@nextxray/browser`, dep on `@nextxray/core`
-- `tsconfig.json`: extends root, refs `core`
-- No Node.js deps (fs, path, enhanced-resolve)
-
-### 2. BrowserHost (implements ScannerHost)
-
-```ts
-interface BrowserHostOptions {
-  rootHandle: FileSystemDirectoryHandle;
-  rootPath?: string; // virtual root like "/project"
-}
-
-class BrowserHost implements ScannerHost {
-  // Maps virtual paths to handles
-  private handleCache: Map<string, FileSystemFileHandle>;
-
-  async readFile(path: string): Promise<string>;
-  async resolve(source: string, importer: string): Promise<string | null>;
-}
-```
-
-**readFile(path)**:
-- Convert virtual path to handle traversal
-- Cache file handles
-- Read via `handle.getFile().text()`
-
-**resolve(source, importer)**:
-- Skip external packages (return null) → `react`, `next/*`, `@radix-ui/*`
-- Relative imports: resolve from importer dir
-- Try extensions: `.tsx`, `.ts`, `.jsx`, `.js`
-- Try `/index.tsx` etc for directories
-- Path aliases: optional (tsconfig.json parsing)
-
-### 3. BrowserDiscovery
-
-```ts
-async function discoverEntryPoints(
-  rootHandle: FileSystemDirectoryHandle,
-  appDirName?: string // default "app"
-): Promise<string[]>
-```
-
-- Find `app/` dir handle first
-- Recursive walk via `entries()`
-- Match `page.tsx`, `layout.tsx` etc
-- Skip `node_modules`, hidden dirs
-- Return virtual paths like `/app/page.tsx`
-
-### 4. Utility: isNextJsProject
-
-```ts
-async function isNextJsProject(
-  rootHandle: FileSystemDirectoryHandle
-): Promise<boolean>
-```
-
-- Check for `next.config.js` or `next.config.mjs` or `next.config.ts`
-- OR check `package.json` has `next` dependency
-
-### 5. Exports
-
-```ts
-// index.ts
-export { BrowserHost } from './browser-host';
-export { discoverEntryPoints, isNextJsProject } from './browser-discovery';
-export type { BrowserHostOptions } from './browser-host';
-
-// Re-export core types for convenience
-export * from '@nextxray/core';
-```
-
-## apps/web Tasks
-
-### 1. ProjectPicker Component
-
-```tsx
-function ProjectPicker({ onSelect }: { onSelect: (handle: FileSystemDirectoryHandle) => void }) {
-  const handleClick = async () => {
-    const handle = await window.showDirectoryPicker();
-    onSelect(handle);
-  };
-  return <button onClick={handleClick}>Select Project</button>;
-}
-```
-
-### 2. useScanner Hook
-
-```ts
-type ScanState =
-  | { status: 'idle' }
-  | { status: 'scanning'; progress?: string }
-  | { status: 'error'; error: string }
-  | { status: 'done'; result: ProjectScanResult };
-
-function useScanner() {
-  const [state, setState] = useState<ScanState>({ status: 'idle' });
-
-  const scan = async (handle: FileSystemDirectoryHandle) => {
-    setState({ status: 'scanning' });
-
-    // 1. Check if Next.js project
-    if (!await isNextJsProject(handle)) {
-      setState({ status: 'error', error: 'Not a Next.js project' });
-      return;
-    }
-
-    // 2. Discover entry points
-    const entryPoints = await discoverEntryPoints(handle);
-
-    // 3. Create host + crawler
-    const host = new BrowserHost({ rootHandle: handle });
-    const crawler = new Crawler(host);
-
-    // 4. Crawl all entries
-    for (const entry of entryPoints) {
-      await crawler.crawl(entry);
-    }
-
-    // 5. Aggregate results
-    const result = aggregate(crawler.results, crawler.visited, entryPoints, '/app');
-    setState({ status: 'done', result });
-  };
-
-  return { state, scan };
-}
-```
-
-### 3. ScanResults Component
-
-Simple display:
-- Project stats (total files, client/server ratio)
-- List of routes with their component counts
-- Most used shared components
-- Render as JSON initially (MVP)
-
-### 4. Main Page
-
-```tsx
-export default function Home() {
-  const { state, scan } = useScanner();
-
-  return (
-    <main>
-      <h1>Next.js X-Ray</h1>
-      <ProjectPicker onSelect={scan} />
-
-      {state.status === 'scanning' && <p>Scanning...</p>}
-      {state.status === 'error' && <p>Error: {state.error}</p>}
-      {state.status === 'done' && <ScanResults result={state.result} />}
-    </main>
-  );
-}
-```
-
-## Implementation Order
-
-1. `packages/browser/` setup (package.json, tsconfig)
-2. `browser-host.ts` - BrowserHost class
-3. `browser-discovery.ts` - discoverEntryPoints + isNextJsProject
-4. `index.ts` exports
-5. `apps/web/` - useScanner hook
-6. `apps/web/` - ProjectPicker + ScanResults components
-7. `apps/web/` - main page integration
-8. Test with real Next.js project in browser
-
-## Known Limitations (MVP)
-
-- No tsconfig path alias support (relative imports only) → **Phase 4.1: add tsconfig parsing**
+- No tsconfig path alias support (relative imports only)
 - External packages always return null (expected)
 - No `node_modules` resolution (not needed for component scanning)
 - File System Access API: Chrome/Edge only (no Firefox/Safari)
 
-## Decisions
+## Phase 5: Path Alias Support
 
-1. **Path alias support**: Skip for MVP. Add in Phase 4.1.
-2. **Error handling**: Fail fast - exit completely and show error on failure.
-3. **Progress feedback**: File-by-file progress reporting.
-4. **Browser compatibility**: Show error explaining FS API unavailable + suggest Chrome/Edge.
+**Goal**: Resolve `@/components/*` and other tsconfig path aliases
 
-## Bugs Found (Demo App Testing)
+**Tasks**:
+- Parse `tsconfig.json` from project root
+- Extract `compilerOptions.paths` and `baseUrl`
+- Implement alias resolution in both BrowserHost and NodeHost
+- Handle `paths` with wildcards (`@/*` → `./src/*`)
 
-### Bug 1: `next/dynamic` with TSAsExpression not detected
-- **Status**: FIXED
-- **File**: `packages/core/src/visitors/shared/detect-dynamic-import.ts`
-- **Issue**: `const X = dynamic(...) as React.ComponentType<...>` not detected
-- **Cause**: Code checks `node.init.type === "CallExpression"` but with type assertion it's `"TSAsExpression"`
-- **Fix**: Added `unwrapTypeAssertion()` helper to unwrap TSAsExpression/TSSatisfiesExpression before checking
-- **Test**: Added `test/fixtures/dynamic-imports-typed.tsx` and test case
+## Phase 6: UI Improvements
 
-### Bug 2: `sharedComponents` always empty
-- **Status**: FIXED
-- **File**: `packages/core/src/aggregator.ts`
-- **Issue**: Stats show `sharedComponents: []` but Card/Button/etc used in 10+ files
-- **Cause**: Was tracking based on resolved `children` (file paths), but most imports don't resolve (path aliases, externals)
-- **Fix**: Changed to track imported components from `importedComponents` metadata using `source:importedName` key
+**Goal**: Replace JSON dump with proper visualization
 
-### Bug 3: Stats type mismatch
-- **Status**: FIXED
-- **File**: `packages/core/src/project-types.ts`, `packages/core/src/aggregator.ts`
-- **Issue**: Missing useful stats like `totalRoutes`, `totalImportedComponents`, `uniqueImportedComponents`, etc.
-- **Fix**: Added new fields to `ProjectStats` type and updated `calculateStats`:
-  - `totalRoutes`, `totalLayouts` - count of pages vs layouts
-  - `totalImportedComponents`, `totalLocalComponents` - total usages
-  - `uniqueImportedComponents`, `uniqueLocalComponents` - distinct counts
-- **Note**: `calculateStats` now requires `entryPoints` as second argument
+**Tasks**:
+- Component tree visualization (collapsible tree view)
+- Route-by-route breakdown with stats
+- Client/server component highlighting (color coding)
+- Shared components panel with usage graph
+- Search/filter by component name or route
+
+## Phase 7: Analysis Features
+
+**Goal**: Add actionable insights
+
+**Ideas**:
+- "Client boundary opportunities" - server components that could stay server
+- Large component detection (high import count)
+- Circular dependency detection
+- Unused local component detection
+- Route complexity score
+
+## Phase 8: Export & Integration
+
+**Ideas**:
+- Export to JSON/CSV
+- GitHub Action for CI scanning
+- VS Code extension
+- Comparison between scans (track changes over time)
+
+## Unresolved Questions
+
+1. Should path alias support be browser-only or also improve NodeHost?
+2. Priority: UI improvements vs analysis features?
+3. Target audience: developers debugging or architects auditing?

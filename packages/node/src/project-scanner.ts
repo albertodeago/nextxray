@@ -32,7 +32,12 @@ export class ProjectScanner {
 
     const routes = aggregate(results, entryPoints, appDir);
     const stats = calculateStats(results, entryPoints);
+    // Convert Map to Record for JSON serialization
+    const resultsRecord: Record<string, ScanResult> = {};
+    for (const [key, value] of results) {
+      resultsRecord[key] = value;
+    }
 
-    return { routes, stats };
+    return { routes, stats, results: resultsRecord };
   }
 }
