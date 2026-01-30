@@ -1,16 +1,11 @@
+import fs from "fs";
+import path from "path";
 import { Crawler } from "./crawler.js";
 import { NodeHost } from "./node-host.js";
-import path from "path";
+import { ProjectScanner } from "./project-scanner.js";
+import { discoverEntryPoints } from "./node-discovery.js";
 
-const main = async () => {
-  const entryArg = process.argv[2];
-
-  if (!entryArg) {
-    console.error("Please provide an entry file path");
-    process.exit(1);
-  }
-
-  const entryPath = path.resolve(process.cwd(), entryArg);
+const runFileMode = async (entryPath: string) => {
   console.log(`Starting crawl from: ${entryPath}`);
 
   const host = new NodeHost();
@@ -45,6 +40,53 @@ const main = async () => {
       console.log("Children: (none)");
     }
   });
+};
+
+const runDirectoryMode = async (appDir: string) => {
+  console.error(`Discovering entry points in: ${appDir}`);
+
+  const entryPoints = await discoverEntryPoints(appDir);
+
+  if (entryPoints.length === 0) {
+    console.error("No page.tsx or layout.tsx files found");
+    process.exit(1);
+  }
+
+  console.error(`Found ${entryPoints.length} entry points`);
+
+  const host = new NodeHost();
+  const scanner = new ProjectScanner(host);
+
+  const start = Date.now();
+  const result = await scanner.scan(entryPoints, appDir);
+  const end = Date.now();
+
+  console.error(`Scanned in ${end - start}ms`);
+
+  // Output JSON to stdout
+  console.log(JSON.stringify(result, null, 2));
+};
+
+const main = async () => {
+  const entryArg = process.argv[2];
+
+  if (!entryArg) {
+    console.error("Usage: scanner <file|directory>");
+    console.error("  file:      Scan a single file and print component tree");
+    console.error("  directory: Scan Next.js app directory and output JSON");
+    process.exit(1);
+  }
+
+  const entryPath = path.resolve(process.cwd(), entryArg);
+
+  // Detect if input is directory or file
+  const stat = fs.statSync(entryPath);
+
+  if (stat.isDirectory()) {
+    await runDirectoryMode(entryPath);
+  } else {
+    await runFileMode(entryPath);
+  }
 };
 
 main().catch(console.error);

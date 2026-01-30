@@ -24,17 +24,18 @@ const logDebug = (msg: string, obj?: unknown) => {
  * It determines if it's a client component and identifies which other components it renders.
  */
 export const scan = ({ code }: Input): AnalyzedComponent => {
-  // Quick string check for the "use client" directive.
-  // We don't need the full AST for this, and it's faster.
-  const isClientComponent =
-    code.includes('"use client"') || code.includes("'use client'");
-
   // Parse the code into an AST (Abstract Syntax Tree).
   // We enable JSX and TypeScript plugins to handle modern React code.
   const ast = parse(code, {
     sourceType: "module",
     plugins: ["jsx", "typescript"],
   });
+
+  // Check for "use client" directive using AST
+  // This avoids false positives from comments, strings, or JSX content
+  const isClientComponent = ast.program.directives.some(
+    (directive) => directive.value.value === "use client"
+  );
 
   const ctx: ScanContext = {
     exactImports: new Map(),

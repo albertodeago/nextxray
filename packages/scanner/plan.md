@@ -66,21 +66,24 @@ We now have the tools to analyze a single component tree. We need to scale this 
 
 ### Todo List
 
-- [ ] **Implement File Discovery**:
+- [x] **Implement File Discovery**:
   - Create logic to recursively find all `page.tsx` and `layout.tsx` files in a given directory (`app/`).
-- [ ] **Implement Project Scanner**:
+- [x] **Implement Project Scanner**:
   - Input: Project Root Path.
   - Logic:
     - Find all standard Next.js entry points.
     - Run the `Crawler` on each entry point.
     - Use a shared cache/visited map to ensure shared components (like `ui/button`) are only scanned once across the whole project.
-- [ ] **Data Aggregation**:
+- [x] **Data Aggregation**:
   - Create a structure to represent the "Application Map" (Routes -> Component Trees).
   - Calculate stats: Client vs Server component ratio, most used shared components.
-- [ ] **CLI Update**:
+- [x] **CLI Update**:
   - Update CLI to accept a directory.
   - If directory -> Run Project Scan.
   - If file -> Run Single Crawler.
+- [x] **Improve "use client" detection**:
+  - ~~Current implementation uses simple string check (`code.includes('"use client"')`) which can give false positives if the string appears in comments.~~
+  - Now uses AST-based detection via `ast.program.directives` - no false positives from comments, strings, or JSX content.
 
 ## Phase 3.5: Browser Compatibility Safety Check
 

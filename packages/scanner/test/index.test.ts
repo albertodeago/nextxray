@@ -237,4 +237,78 @@ describe("scanner", () => {
       ]),
     });
   });
+
+  describe("use client directive detection", () => {
+    it("detects use client with double quotes", () => {
+      const fixturePath = path.join(
+        process.cwd(),
+        "test/fixtures/use-client-double-quotes.tsx",
+      );
+      const code = fs.readFileSync(fixturePath, "utf-8");
+
+      const result = scan({ code });
+
+      expect(result.component.isClientComponent).toBe(true);
+    });
+
+    it("detects use client with single quotes", () => {
+      const fixturePath = path.join(
+        process.cwd(),
+        "test/fixtures/use-client-single-quotes.tsx",
+      );
+      const code = fs.readFileSync(fixturePath, "utf-8");
+
+      const result = scan({ code });
+
+      expect(result.component.isClientComponent).toBe(true);
+    });
+
+    it("does NOT detect use client in comments (false positive prevention)", () => {
+      const fixturePath = path.join(
+        process.cwd(),
+        "test/fixtures/use-client-in-comment.tsx",
+      );
+      const code = fs.readFileSync(fixturePath, "utf-8");
+
+      const result = scan({ code });
+
+      expect(result.component.isClientComponent).toBe(false);
+    });
+
+    it("does NOT detect use client in JSX strings (false positive prevention)", () => {
+      const fixturePath = path.join(
+        process.cwd(),
+        "test/fixtures/use-client-in-jsx-string.tsx",
+      );
+      const code = fs.readFileSync(fixturePath, "utf-8");
+
+      const result = scan({ code });
+
+      expect(result.component.isClientComponent).toBe(false);
+    });
+
+    it("does NOT detect use client in variable strings (false positive prevention)", () => {
+      const fixturePath = path.join(
+        process.cwd(),
+        "test/fixtures/use-client-in-variable.tsx",
+      );
+      const code = fs.readFileSync(fixturePath, "utf-8");
+
+      const result = scan({ code });
+
+      expect(result.component.isClientComponent).toBe(false);
+    });
+
+    it("detects use client even with leading comments", () => {
+      const fixturePath = path.join(
+        process.cwd(),
+        "test/fixtures/use-client-with-leading-comment.tsx",
+      );
+      const code = fs.readFileSync(fixturePath, "utf-8");
+
+      const result = scan({ code });
+
+      expect(result.component.isClientComponent).toBe(true);
+    });
+  });
 });
