@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useScanner } from "./hooks/useScanner";
 import { ProjectPicker } from "./components/ProjectPicker";
 import { ScanResults } from "./components/ScanResults";
+import { ThemeToggle } from "./components/ThemeToggle";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
@@ -21,6 +22,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen px-5 py-10">
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
       <header className="mx-auto max-w-225 text-center">
         <h1 className="glow-title mb-3 text-4xl font-bold tracking-tight">Next.js X-Ray</h1>
         <p className="mx-auto mb-8 max-w-lg text-muted-foreground">
