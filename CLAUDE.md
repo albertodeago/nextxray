@@ -50,10 +50,6 @@ CLI tool: `nextxray`
 - File mode: `nextxray <file>` → human-readable component tree
 - Dir mode: `nextxray <dir>` → JSON output (routes, stats, results)
 
-### @repo/ui
-
-Shared React components (button, card, code).
-
 ### @repo/eslint-config
 
 Shared ESLint configs: `./base`, `./next-js`, `./react-internal`
