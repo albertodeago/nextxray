@@ -21,7 +21,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen px-5 py-10">
-      <main className="mx-auto max-w-225 text-center">
+      <header className="mx-auto max-w-225 text-center">
         <h1 className="mb-2 text-4xl font-bold tracking-tight">Next.js X-Ray</h1>
         <p className="mb-8 text-muted-foreground">
           Analyze your Next.js project&apos;s component structure
@@ -68,14 +68,17 @@ export default function Home() {
         )}
 
         {state.status === "done" && (
-          <>
-            <Button variant="outline" onClick={reset} className="mb-6">
-              Scan Another Project
-            </Button>
-            <ScanResults result={state.result} />
-          </>
+          <Button variant="outline" onClick={reset} className="mb-6">
+            Scan Another Project
+          </Button>
         )}
-      </main>
+      </header>
+
+      {state.status === "done" && (
+        <main>
+          <ScanResults result={state.result} />
+        </main>
+      )}
     </div>
   );
 }

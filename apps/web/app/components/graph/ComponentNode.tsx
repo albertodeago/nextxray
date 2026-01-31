@@ -8,6 +8,7 @@ export type ComponentNodeData = {
   label: string;
   filePath: string;
   isClient: boolean;
+  isInheritedClient?: boolean; // Server component rendered under client boundary
   isEntryPoint?: boolean;
   entryType?: string;
 };
@@ -16,24 +17,39 @@ interface ComponentNodeProps {
   data: ComponentNodeData;
 }
 
+type ColorVariant = "server" | "client" | "inherited";
+
+function getColorVariant(data: ComponentNodeData): ColorVariant {
+  if (data.isClient) return "client";
+  if (data.isInheritedClient) return "inherited";
+  return "server";
+}
+
+// Use hex colors directly since React Flow nodes may not have access to CSS variables
+const colorValues: Record<ColorVariant, string> = {
+  server: "#22c55e",
+  client: "#ef4444",
+  inherited: "#f59e0b",
+};
+
 function ComponentNodeComponent({ data }: ComponentNodeProps) {
-  const { label, filePath, isClient, isEntryPoint, entryType } = data;
+  const { label, filePath, isEntryPoint, entryType } = data;
+  const variant = getColorVariant(data);
+  const color = colorValues[variant];
 
   return (
     <div
       className={cn(
         "rounded-lg border-2 px-4 py-3 shadow-md min-w-32 max-w-48",
-        "bg-background transition-all",
-        isClient ? "border-client" : "border-server"
+        "bg-background transition-all"
       )}
+      style={{ borderColor: color }}
     >
       <Handle
         type="target"
         position={Position.Left}
-        className={cn(
-          "!w-2 !h-2 !border-2 !bg-background",
-          isClient ? "!border-client" : "!border-server"
-        )}
+        className="!w-2 !h-2 !border-2 !bg-background"
+        style={{ borderColor: color }}
       />
 
       {isEntryPoint && entryType && (
@@ -43,10 +59,8 @@ function ComponentNodeComponent({ data }: ComponentNodeProps) {
       )}
 
       <div
-        className={cn(
-          "font-medium text-sm truncate",
-          isClient ? "text-client" : "text-server"
-        )}
+        className="font-medium text-sm truncate"
+        style={{ color }}
       >
         {label}
       </div>
@@ -60,10 +74,8 @@ function ComponentNodeComponent({ data }: ComponentNodeProps) {
       <Handle
         type="source"
         position={Position.Right}
-        className={cn(
-          "!w-2 !h-2 !border-2 !bg-background",
-          isClient ? "!border-client" : "!border-server"
-        )}
+        className="!w-2 !h-2 !border-2 !bg-background"
+        style={{ borderColor: color }}
       />
     </div>
   );

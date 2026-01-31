@@ -24,8 +24,13 @@ export function ScanResults({ result }: ScanResultsProps) {
   const { sharedComponents } = stats;
 
   return (
-    <div className="mx-auto max-w-200 space-y-6 text-left">
-      <Card>
+    <div className="space-y-6 text-left">
+      <div className="mx-auto w-full max-w-[95vw]">
+        <TreeView routes={routes} results={results} />
+      </div>
+
+      <div className="mx-auto max-w-200 space-y-6">
+        <Card>
         <CardHeader>
           <CardTitle>Project Stats</CardTitle>
         </CardHeader>
@@ -120,19 +125,18 @@ export function ScanResults({ result }: ScanResultsProps) {
         </Card>
       )}
 
-      <TreeView routes={routes} results={results} />
-
-      <Collapsible>
-        <CollapsibleTrigger className="flex w-full cursor-pointer items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <span className="font-mono">▶</span>
-          Raw JSON Output
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <pre className="mt-3 max-h-96 overflow-auto rounded-lg border border-border bg-secondary/50 p-4 font-mono text-xs">
-            {JSON.stringify(result, null, 2)}
-          </pre>
-        </CollapsibleContent>
-      </Collapsible>
+        <Collapsible>
+          <CollapsibleTrigger className="flex w-full cursor-pointer items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <span className="font-mono">▶</span>
+            Raw JSON Output
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <pre className="mt-3 max-h-96 overflow-auto rounded-lg border border-border bg-secondary/50 p-4 font-mono text-xs">
+              {JSON.stringify(result, null, 2)}
+            </pre>
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
     </div>
   );
 }

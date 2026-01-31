@@ -13,6 +13,13 @@ type TreeNode = {
   data: ComponentNodeData;
 };
 
+// Use hex colors directly since React Flow SVG edges may not have access to CSS variables
+function getEdgeColor(data: ComponentNodeData): string {
+  if (data.isClient) return "#ef4444"; // --color-client
+  if (data.isInheritedClient) return "#f59e0b"; // --color-inherited
+  return "#22c55e"; // --color-server
+}
+
 export function buildGraphFromRoute(
   route: RouteEntry,
   results: Map<string, ScanResult>
@@ -21,15 +28,27 @@ export function buildGraphFromRoute(
   const edges: Edge[] = [];
   const visited = new Set<string>();
 
-  // Build tree structure first
-  function buildTree(node: ScanResult, parentId: string): TreeNode {
+  // Build tree structure first, tracking client boundary context
+  function buildTree(
+    node: ScanResult,
+    parentId: string,
+    underClientBoundary: boolean
+  ): TreeNode {
+    const isClient = node.metadata.component.isClientComponent;
+    // If this node is under a client boundary but isn't itself a client component,
+    // it's an inherited client component
+    const isInheritedClient = !isClient && underClientBoundary;
+    // Children will be under client boundary if this node is client or already inherited
+    const childrenUnderClient = underClientBoundary || isClient;
+
     const treeNode: TreeNode = {
       id: parentId,
       children: [],
       data: {
         label: node.metadata.component.name || "Component",
         filePath: node.id,
-        isClient: node.metadata.component.isClientComponent,
+        isClient,
+        isInheritedClient,
       },
     };
 
@@ -41,10 +60,9 @@ export function buildGraphFromRoute(
       if (visited.has(nodeId)) continue;
       visited.add(nodeId);
 
-      const childTree = buildTree(childNode, nodeId);
+      const childTree = buildTree(childNode, nodeId, childrenUnderClient);
       childTree.data.label = childNode.metadata.component.name || child.params.name;
       childTree.data.filePath = child.childId;
-      childTree.data.isClient = childNode.metadata.component.isClientComponent;
       treeNode.children.push(childTree);
     }
 
@@ -54,6 +72,7 @@ export function buildGraphFromRoute(
   // Create entry point node
   const entryNode = route.tree;
   const entryNodeId = `entry-${route.route}`;
+  const entryIsClient = entryNode.metadata.component.isClientComponent;
 
   const rootTree: TreeNode = {
     id: entryNodeId,
@@ -61,13 +80,13 @@ export function buildGraphFromRoute(
     data: {
       label: route.route || "/",
       filePath: route.entryFile,
-      isClient: entryNode.metadata.component.isClientComponent,
+      isClient: entryIsClient,
       isEntryPoint: true,
       entryType: route.entryType,
     },
   };
 
-  // Build children
+  // Build children - they're under client boundary if entry is client
   for (const child of entryNode.children) {
     const childNode = results.get(child.childId);
     if (!childNode) continue;
@@ -76,10 +95,9 @@ export function buildGraphFromRoute(
     if (visited.has(nodeId)) continue;
     visited.add(nodeId);
 
-    const childTree = buildTree(childNode, nodeId);
+    const childTree = buildTree(childNode, nodeId, entryIsClient);
     childTree.data.label = childNode.metadata.component.name || child.params.name;
     childTree.data.filePath = child.childId;
-    childTree.data.isClient = childNode.metadata.component.isClientComponent;
     rootTree.children.push(childTree);
   }
 
@@ -110,12 +128,12 @@ export function buildGraphFromRoute(
       const childY = layoutTree(child, depth + 1);
       childYs.push(childY);
 
-      // Add edge
+      // Add edge with color based on child's status
       edges.push({
         id: `edge-${tree.id}-${child.id}`,
         source: tree.id,
         target: child.id,
-        style: { stroke: child.data.isClient ? "var(--color-client)" : "var(--color-server)" },
+        style: { stroke: getEdgeColor(child.data) },
       });
     }
 

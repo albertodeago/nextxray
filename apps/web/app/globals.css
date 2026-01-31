@@ -10,6 +10,8 @@
   --color-server-bg: #052e16;
   --color-client: #ef4444;
   --color-client-bg: #450a0a;
+  --color-inherited: #f59e0b;
+  --color-inherited-bg: #451a03;
 }
 
 html,
