@@ -3,7 +3,6 @@
 TODO:
 
 - docs, readme etc
-- rename repository
 
 ## Using this example
 
