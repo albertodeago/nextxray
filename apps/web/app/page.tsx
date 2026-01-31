@@ -22,7 +22,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen px-5 py-10">
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <a
+          href="https://github.com/albertodeago/nextxray/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex h-9 items-center justify-center rounded-md px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+        >
+          Report issue
+        </a>
         <ThemeToggle />
       </div>
       <header className="mx-auto max-w-225 text-center">
@@ -38,16 +46,22 @@ export default function Home() {
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>
               {state.error}
-              {state.isRecoverable && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={reset}
-                  className="mt-3"
-                >
-                  Try Again
+              <div className="mt-3 flex gap-2">
+                {state.isRecoverable && (
+                  <Button variant="outline" size="sm" onClick={reset}>
+                    Try Again
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" asChild>
+                  <a
+                    href="https://github.com/albertodeago/nextxray/issues/new"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Report issue
+                  </a>
                 </Button>
-              )}
+              </div>
             </AlertDescription>
           </Alert>
         )}

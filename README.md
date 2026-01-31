@@ -16,6 +16,7 @@ Static analysis tool for visualizing Next.js component trees. See which componen
 Roadmap
 
 - [x] Web application using File System Access API
+  - [] Enable ui to accept an URL of a repo to analyze it
 - [] Publish packages (cli) to enable usages without UI
 - [] (Maybe?) create Github Action for automatic reports (or show an example)
 
