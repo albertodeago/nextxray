@@ -5,16 +5,14 @@ import {
   ReactFlow,
   Background,
   Controls,
-  MiniMap,
   useNodesState,
   useEdgesState,
   type NodeTypes,
-  type Node,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 import type { RouteEntry, ScanResult } from "@nextxray/browser";
-import { ComponentNode, type ComponentNodeData } from "./ComponentNode";
+import { ComponentNode } from "./ComponentNode";
 import { buildGraphFromRoute } from "./graph-layout";
 
 const nodeTypes: NodeTypes = {
@@ -53,13 +51,6 @@ export function ComponentGraph({ route, results }: ComponentGraphProps) {
         <Controls
           className="!bg-secondary !border-border !shadow-md [&>button]:!bg-secondary [&>button]:!border-border [&>button]:!text-foreground [&>button:hover]:!bg-accent"
           showInteractive={false}
-        />
-        <MiniMap
-          className="!bg-secondary !border-border"
-          nodeColor={(node: Node<ComponentNodeData>) => {
-            return node.data?.isClient ? "var(--color-client)" : "var(--color-server)";
-          }}
-          maskColor="rgba(0, 0, 0, 0.5)"
         />
       </ReactFlow>
     </div>
