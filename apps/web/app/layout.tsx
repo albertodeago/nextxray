@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Suspense } from "react";
 import "./globals.css";
 import { CronitorProvider } from "./components/CronitorProvider";
 
@@ -37,7 +38,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans`}>
-        <CronitorProvider>{children}</CronitorProvider>
+        <Suspense>
+          <CronitorProvider>{children}</CronitorProvider>
+        </Suspense>
       </body>
     </html>
   );
