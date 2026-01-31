@@ -21,7 +21,7 @@ interface TreeViewProps {
 type ViewMode = "individual" | "stacked" | "deduplicated";
 
 export function TreeView({ routes, results }: TreeViewProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>("individual");
+  const [viewMode, setViewMode] = useState<ViewMode>("stacked");
   const resultsMap = useMemo(() => new Map(Object.entries(results)), [results]);
 
   return (
@@ -30,13 +30,6 @@ export function TreeView({ routes, results }: TreeViewProps) {
         <div className="flex items-center justify-between">
           <CardTitle>Component Trees</CardTitle>
           <div className="flex gap-1">
-            <Button
-              variant={viewMode === "individual" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("individual")}
-            >
-              Individual
-            </Button>
             <Button
               variant={viewMode === "stacked" ? "default" : "outline"}
               size="sm"
@@ -50,6 +43,13 @@ export function TreeView({ routes, results }: TreeViewProps) {
               onClick={() => setViewMode("deduplicated")}
             >
               Deduplicated
+            </Button>
+            <Button
+              variant={viewMode === "individual" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("individual")}
+            >
+              Individual
             </Button>
           </div>
         </div>

@@ -70,7 +70,7 @@ body {
   --card-foreground: #fafafa;
   --popover: #0a0a0a;
   --popover-foreground: #fafafa;
-  --primary: #fafafa;
+  --primary: #fb923c;
   --primary-foreground: #0a0a0a;
   --secondary: #27272a;
   --secondary-foreground: #fafafa;
@@ -105,8 +105,8 @@ body {
   --card-foreground: #0a0a0a;
   --popover: #ffffff;
   --popover-foreground: #0a0a0a;
-  --primary: #0a0a0a;
-  --primary-foreground: #fafafa;
+  --primary: #ea580c;
+  --primary-foreground: #ffffff;
   --secondary: #f4f4f5;
   --secondary-foreground: #0a0a0a;
   --muted: #f4f4f5;
@@ -134,5 +134,13 @@ body {
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
+    background-image: radial-gradient(ellipse at 50% 0%, rgba(251, 146, 60, 0.12) 0%, transparent 60%),
+      linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 100% 100%, 32px 32px, 32px 32px;
+  }
+  button {
+    cursor: pointer;
   }
 }
+
