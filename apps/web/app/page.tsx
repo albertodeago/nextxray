@@ -38,14 +38,16 @@ export default function Home() {
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>
               {state.error}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={reset}
-                className="mt-3"
-              >
-                Try Again
-              </Button>
+              {state.isRecoverable && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={reset}
+                  className="mt-3"
+                >
+                  Try Again
+                </Button>
+              )}
             </AlertDescription>
           </Alert>
         )}
