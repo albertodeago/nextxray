@@ -19,7 +19,10 @@
       "Bash(npm run ts:check:*)",
       "Bash(npm run lint:*)",
       "Bash(npm run test:nextxray:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "mcp__chrome-devtools__new_page",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__navigate_page"
     ]
   }
 }

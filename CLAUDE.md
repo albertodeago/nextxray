@@ -62,6 +62,30 @@ Shared ESLint configs: `./base`, `./next-js`, `./react-internal`
 
 Shared TS configs (ES2022, NodeNext, strict mode).
 
+## Apps
+
+### apps/web
+
+Next.js 16 web app for browser-based project scanning. Uses `@nextxray/browser` + File System Access API.
+
+**Stack:** Next.js 16, React 19, Tailwind CSS v4, shadcn/ui, React Flow
+
+**Structure:**
+
+- `app/page.tsx` - Main page with scanner UI
+- `app/components/` - UI components
+  - `ProjectPicker.tsx` - Directory picker button
+  - `ScanResults.tsx` - Stats, routes, shared components display
+  - `TreeView.tsx` - Collapsible route sections with graphs
+  - `graph/` - React Flow visualization
+    - `ComponentGraph.tsx` - React Flow wrapper (pan, zoom, minimap)
+    - `ComponentNode.tsx` - Custom node (green=server, red=client)
+    - `graph-layout.ts` - Tree layout algorithm
+- `app/hooks/useScanner.ts` - Scanning state machine
+- `components/ui/` - shadcn components (button, card, badge, alert, collapsible)
+
+**Styling:** Dark mode by default (Vercel-style), custom CSS vars for server/client colors (`--color-server`, `--color-client`)
+
 ## Key Interfaces
 
 ```typescript
