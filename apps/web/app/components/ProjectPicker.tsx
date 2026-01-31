@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 interface ProjectPickerProps {
   onSelect: (handle: FileSystemDirectoryHandle) => void;
   disabled?: boolean;
@@ -22,17 +24,8 @@ export function ProjectPicker({ onSelect, disabled }: ProjectPickerProps) {
   };
 
   return (
-    <button
-      onClick={handleClick}
-      disabled={disabled}
-      style={{
-        padding: "12px 24px",
-        fontSize: "16px",
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.6 : 1,
-      }}
-    >
+    <Button onClick={handleClick} disabled={disabled} size="lg">
       Select Project Folder
-    </button>
+    </Button>
   );
 }

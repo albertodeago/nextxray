@@ -3,6 +3,13 @@
 import { useState, useMemo } from "react";
 import type { RouteEntry, ScanResult } from "@nextxray/browser";
 import { ComponentTree } from "./ComponentTree";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface TreeViewProps {
   routes: RouteEntry[];
@@ -13,50 +20,30 @@ export function TreeView({ routes, results }: TreeViewProps) {
   const resultsMap = useMemo(() => new Map(Object.entries(results)), [results]);
 
   return (
-    <section style={{ marginBottom: "24px" }}>
-      <h3>Component Trees</h3>
-      <div
-        style={{
-          fontSize: "12px",
-          marginBottom: "12px",
-          color: "#666",
-        }}
-      >
-        <span
-          style={{
-            display: "inline-block",
-            width: "12px",
-            height: "12px",
-            backgroundColor: "#dcfce7",
-            border: "1px solid #22c55e",
-            marginRight: "4px",
-            verticalAlign: "middle",
-          }}
-        />
-        Server Component
-        <span
-          style={{
-            display: "inline-block",
-            width: "12px",
-            height: "12px",
-            backgroundColor: "#fee2e2",
-            border: "1px solid #ef4444",
-            marginLeft: "16px",
-            marginRight: "4px",
-            verticalAlign: "middle",
-          }}
-        />
-        Client Component
-      </div>
-
-      {routes.map((route) => (
-        <RouteTreeSection
-          key={route.route + route.entryFile}
-          route={route}
-          resultsMap={resultsMap}
-        />
-      ))}
-    </section>
+    <Card>
+      <CardHeader>
+        <CardTitle>Component Trees</CardTitle>
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-3 w-3 rounded-sm border border-server bg-server-bg" />
+            Server Component
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-3 w-3 rounded-sm border border-client bg-client-bg" />
+            Client Component
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {routes.map((route) => (
+          <RouteTreeSection
+            key={route.route + route.entryFile}
+            route={route}
+            resultsMap={resultsMap}
+          />
+        ))}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -69,44 +56,21 @@ function RouteTreeSection({ route, resultsMap }: RouteTreeSectionProps) {
   const [expanded, setExpanded] = useState(true);
 
   return (
-    <div
-      style={{
-        marginBottom: "16px",
-        border: "1px solid #e5e7eb",
-        borderRadius: "8px",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        onClick={() => setExpanded(!expanded)}
-        style={{
-          padding: "12px",
-          backgroundColor: "#f9fafb",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-        }}
-      >
-        <span style={{ fontFamily: "monospace" }}>{expanded ? "▼" : "▶"}</span>
-        <strong>{route.route}</strong>
-        <span
-          style={{
-            fontSize: "12px",
-            color: "#666",
-            backgroundColor: "#e5e7eb",
-            padding: "2px 6px",
-            borderRadius: "4px",
-          }}
-        >
-          {route.entryType}
-        </span>
+    <Collapsible open={expanded} onOpenChange={setExpanded}>
+      <div className="overflow-hidden rounded-lg border border-border">
+        <CollapsibleTrigger className="flex w-full cursor-pointer items-center gap-2 bg-secondary/50 p-3 hover:bg-secondary/70">
+          <span className="font-mono text-xs">{expanded ? "▼" : "▶"}</span>
+          <span className="font-medium">{route.route}</span>
+          <Badge variant="outline" className="text-[10px]">
+            {route.entryType}
+          </Badge>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="p-3">
+            <ComponentTree node={route.tree} results={resultsMap} depth={0} />
+          </div>
+        </CollapsibleContent>
       </div>
-      {expanded && (
-        <div style={{ padding: "12px" }}>
-          <ComponentTree node={route.tree} results={resultsMap} depth={0} />
-        </div>
-      )}
-    </div>
+    </Collapsible>
   );
 }

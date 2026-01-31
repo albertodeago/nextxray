@@ -2,22 +2,13 @@
 
 import { useState } from "react";
 import type { ScanResult } from "@nextxray/browser";
+import { cn } from "@/lib/utils";
 
 interface ComponentTreeProps {
   node: ScanResult;
   results: Map<string, ScanResult>;
   depth?: number;
 }
-
-const clientStyles = {
-  backgroundColor: "#fee2e2",
-  borderLeft: "3px solid #ef4444",
-};
-
-const serverStyles = {
-  backgroundColor: "#dcfce7",
-  borderLeft: "3px solid #22c55e",
-};
 
 function shortenPath(path: string): string {
   const parts = path.split("/");
@@ -29,49 +20,35 @@ export function ComponentTree({ node, results, depth = 0 }: ComponentTreeProps) 
   const [expanded, setExpanded] = useState(depth < 2);
   const hasChildren = node.children.length > 0;
   const isClient = node.metadata.component.isClientComponent;
-
-  const nodeStyle: React.CSSProperties = {
-    padding: "8px",
-    marginBottom: "4px",
-    borderRadius: "4px",
-    marginLeft: depth * 20,
-    ...(isClient ? clientStyles : serverStyles),
-  };
-
-  const toggleStyle: React.CSSProperties = {
-    cursor: "pointer",
-    fontFamily: "monospace",
-    marginRight: "8px",
-    userSelect: "none",
-    display: "inline-block",
-    width: "16px",
-  };
-
   const componentName = node.metadata.component.name || "(anonymous)";
 
   return (
     <div>
-      <div style={nodeStyle}>
+      <div
+        className={cn(
+          "mb-1 rounded p-2 border-l-3",
+          isClient
+            ? "border-l-client bg-client-bg"
+            : "border-l-server bg-server-bg"
+        )}
+        style={{ marginLeft: depth * 20 }}
+      >
         {hasChildren ? (
-          <span style={toggleStyle} onClick={() => setExpanded(!expanded)}>
+          <span
+            className="mr-2 inline-block w-4 cursor-pointer select-none font-mono text-xs"
+            onClick={() => setExpanded(!expanded)}
+          >
             {expanded ? "▼" : "▶"}
           </span>
         ) : (
-          <span style={toggleStyle}> </span>
+          <span className="mr-2 inline-block w-4 font-mono text-xs"> </span>
         )}
-        <strong>{componentName}</strong>
-        <span style={{ marginLeft: "8px", fontSize: "12px", color: "#666" }}>
+        <strong className="text-sm">{componentName}</strong>
+        <span className="ml-2 text-xs text-muted-foreground">
           {shortenPath(node.id)}
         </span>
         {isClient && (
-          <span
-            style={{
-              marginLeft: "8px",
-              fontSize: "11px",
-              color: "#dc2626",
-              fontWeight: 500,
-            }}
-          >
+          <span className="ml-2 text-[11px] font-medium text-client">
             client
           </span>
         )}
@@ -85,20 +62,12 @@ export function ComponentTree({ node, results, depth = 0 }: ComponentTreeProps) 
             return (
               <div
                 key={child.childId + idx}
-                style={{
-                  marginLeft: (depth + 1) * 20,
-                  padding: "8px",
-                  marginBottom: "4px",
-                  borderRadius: "4px",
-                  backgroundColor: "#f3f4f6",
-                  borderLeft: "3px solid #9ca3af",
-                  fontSize: "12px",
-                  color: "#666",
-                }}
+                className="mb-1 rounded border-l-3 border-l-muted-foreground bg-secondary/50 p-2 text-xs text-muted-foreground"
+                style={{ marginLeft: (depth + 1) * 20 }}
               >
-                <span style={{ fontFamily: "monospace", marginRight: "8px", width: "16px", display: "inline-block" }}> </span>
+                <span className="mr-2 inline-block w-4 font-mono"> </span>
                 {child.params.name}
-                <span style={{ marginLeft: "8px", color: "#999" }}>
+                <span className="ml-2 opacity-60">
                   (unresolved: {child.params.source})
                 </span>
               </div>
