@@ -67,7 +67,7 @@ export function TreeView({ routes, results }: TreeViewProps) {
               className="inline-block h-3 w-3 rounded-full border-2"
               style={{ borderColor: "#f59e0b" }}
             />
-            Server (runs on client)
+            Server (but inside a client boundary)
           </span>
         </div>
       </CardHeader>
@@ -99,7 +99,7 @@ interface RouteGraphSectionProps {
 }
 
 function RouteGraphSection({ route, resultsMap }: RouteGraphSectionProps) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <Collapsible open={expanded} onOpenChange={setExpanded}>
