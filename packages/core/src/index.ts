@@ -9,8 +9,10 @@ export {
   aggregate,
   calculateStats,
   extractRoute,
+  extractRouteInfo,
   getEntryType,
 } from "./aggregator.js";
+export type { RouteInfo } from "./aggregator.js";
 
 // Path alias resolution
 export { createPathAliasResolver } from "./path-alias.js";

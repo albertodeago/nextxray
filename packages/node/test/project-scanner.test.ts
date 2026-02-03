@@ -3,7 +3,7 @@ import path from "node:path";
 import { ProjectScanner } from "../src/project-scanner.js";
 import { NodeHost } from "../src/node-host.js";
 import { discoverEntryPoints } from "../src/node-discovery.js";
-import { extractRoute, getEntryType } from "@nextxray/core";
+import { extractRoute, extractRouteInfo, getEntryType } from "@nextxray/core";
 
 const MOCK_APP_DIR = path.join(import.meta.dirname, "mock-app/app");
 
@@ -67,6 +67,44 @@ describe("aggregator", () => {
     });
   });
 
+  describe("extractRouteInfo", () => {
+    it("extracts route without group", () => {
+      const info = extractRouteInfo(
+        `${MOCK_APP_DIR}/dashboard/page.tsx`,
+        MOCK_APP_DIR
+      );
+      expect(info.route).toBe("/dashboard");
+      expect(info.routeGroup).toBeUndefined();
+    });
+
+    it("extracts route and single group", () => {
+      const info = extractRouteInfo(
+        `${MOCK_APP_DIR}/(marketing)/blog/page.tsx`,
+        MOCK_APP_DIR
+      );
+      expect(info.route).toBe("/blog");
+      expect(info.routeGroup).toBe("(marketing)");
+    });
+
+    it("extracts route and nested groups", () => {
+      const info = extractRouteInfo(
+        `${MOCK_APP_DIR}/(auth)/(admin)/users/page.tsx`,
+        MOCK_APP_DIR
+      );
+      expect(info.route).toBe("/users");
+      expect(info.routeGroup).toBe("(auth)(admin)");
+    });
+
+    it("extracts root route with group", () => {
+      const info = extractRouteInfo(
+        `${MOCK_APP_DIR}/(marketing)/page.tsx`,
+        MOCK_APP_DIR
+      );
+      expect(info.route).toBe("/");
+      expect(info.routeGroup).toBe("(marketing)");
+    });
+  });
+
   describe("getEntryType", () => {
     it("identifies page files", () => {
       expect(getEntryType("/app/page.tsx")).toBe("page");
@@ -115,9 +153,11 @@ describe("ProjectScanner", () => {
 
     // Blog page (group folder stripped)
     expect(routeMap.get("/blog:page")).toBeDefined();
+    expect(routeMap.get("/blog:page")?.routeGroup).toBe("(marketing)");
 
     // About page (group folder stripped)
     expect(routeMap.get("/about:page")).toBeDefined();
+    expect(routeMap.get("/about:page")?.routeGroup).toBe("(marketing)");
   });
 
   it("calculates correct stats", async () => {

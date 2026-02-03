@@ -107,6 +107,9 @@ function RouteGraphSection({ route, resultsMap }: RouteGraphSectionProps) {
         <CollapsibleTrigger className="flex w-full cursor-pointer items-center gap-2 bg-secondary/50 p-3 hover:bg-secondary/70">
           <span className="font-mono text-xs">{expanded ? "▼" : "▶"}</span>
           <span className="font-medium">{route.route || "/"}</span>
+          {route.routeGroup && (
+            <span className="text-muted-foreground">{route.routeGroup}</span>
+          )}
           <Badge variant="outline" className="text-[10px]">
             {route.entryType}
           </Badge>

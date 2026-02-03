@@ -6,11 +6,16 @@ import {
   SharedComponentUsage,
 } from "./project-types.js";
 
+export type RouteInfo = {
+  route: string;
+  routeGroup?: string;
+};
+
 /**
- * Extracts the route from a file path relative to the app directory.
- * e.g. app/(marketing)/blog/[slug]/page.tsx → /blog/[slug]
+ * Extracts the route and route group from a file path relative to the app directory.
+ * e.g. app/(marketing)/blog/[slug]/page.tsx → { route: "/blog/[slug]", routeGroup: "(marketing)" }
  */
-export function extractRoute(filePath: string, appDir: string): string {
+export function extractRouteInfo(filePath: string, appDir: string): RouteInfo {
   // Normalize paths for comparison
   const normalizedFile = filePath.replace(/\\/g, "/");
   const normalizedAppDir = appDir.replace(/\\/g, "/").replace(/\/$/, "");
@@ -32,14 +37,32 @@ export function extractRoute(filePath: string, appDir: string): string {
   // Remove filename (page.tsx, layout.tsx, etc.)
   segments.pop();
 
+  // Extract route groups (parenthesized segments)
+  const groupSegments = segments.filter((seg) => /^\(.*\)$/.test(seg));
+
   // Filter out group folders (parenthesized) and build route
-  const routeSegments = segments.filter((seg) => !seg.match(/^\(.*\)$/));
+  const routeSegments = segments.filter((seg) => !/^\(.*\)$/.test(seg));
 
   // Build final route
   const route = "/" + routeSegments.join("/");
 
-  // Normalize trailing slash for root
-  return route === "/" ? "/" : route.replace(/\/$/, "");
+  // Build route group string (join multiple groups if nested)
+  const routeGroup =
+    groupSegments.length > 0 ? groupSegments.join("") : undefined;
+
+  return {
+    route: route === "/" ? "/" : route.replace(/\/$/, ""),
+    routeGroup,
+  };
+}
+
+/**
+ * Extracts the route from a file path relative to the app directory.
+ * e.g. app/(marketing)/blog/[slug]/page.tsx → /blog/[slug]
+ * @deprecated Use extractRouteInfo() instead to also get route group information
+ */
+export function extractRoute(filePath: string, appDir: string): string {
+  return extractRouteInfo(filePath, appDir).route;
 }
 
 /**
@@ -67,8 +90,11 @@ export function aggregate(
       throw new Error(`No scan result found for entry point: ${entryFile}`);
     }
 
+    const { route, routeGroup } = extractRouteInfo(entryFile, appDir);
+
     return {
-      route: extractRoute(entryFile, appDir),
+      route,
+      routeGroup,
       entryType: getEntryType(entryFile),
       entryFile,
       tree,

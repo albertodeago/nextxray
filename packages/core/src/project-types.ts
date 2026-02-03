@@ -4,6 +4,7 @@ export type EntryType = "page" | "layout";
 
 export type RouteEntry = {
   route: string;
+  routeGroup?: string;
   entryType: EntryType;
   entryFile: string;
   tree: ScanResult;

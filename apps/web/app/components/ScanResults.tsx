@@ -105,6 +105,11 @@ export function ScanResults({ result }: ScanResultsProps) {
                 >
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{route.route}</span>
+                    {route.routeGroup && (
+                      <span className="text-muted-foreground">
+                        {route.routeGroup}
+                      </span>
+                    )}
                     <Badge variant="secondary">{route.entryType}</Badge>
                     {route.tree.metadata.component.isClientComponent && (
                       <Badge variant="destructive" className="text-[10px]">

@@ -97,7 +97,7 @@ function buildRouteSubgraph(
   }
 
   const entryNode = route.tree;
-  const entryNodeId = `entry-${route.route}-${route.entryType}`;
+  const entryNodeId = `entry-${route.entryFile}`;
   const entryIsClient = entryNode.metadata.component.isClientComponent;
 
   const rootTree: TreeNode = {
