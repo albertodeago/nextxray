@@ -53,7 +53,7 @@ export const scan = ({ code }: Input): AnalyzedComponent => {
     createJsxVisitor(ctx),
   ];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any - Babel types are complex, was not able to work around that
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Babel types are complex
   traverse(ast as any, _traverse.visitors.merge(visitors));
 
   const importedComponents: AnalyzedComponent["importedComponents"] = [];

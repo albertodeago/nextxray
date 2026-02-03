@@ -194,9 +194,6 @@ describe("ProjectScanner", () => {
     // Shared components are tracked by "source:importedName" format
     // Since each file uses a different relative path to Button,
     // they appear as separate entries. Check that Button imports exist.
-    const buttonImports = result.stats.sharedComponents.filter((c) =>
-      c.id.includes("button") && c.id.endsWith(":Button")
-    );
     // Each relative path is unique, so no single Button import is "shared"
     // But we can verify totalImportedComponents includes them
     expect(result.stats.totalImportedComponents).toBeGreaterThan(0);

@@ -77,12 +77,12 @@ export function TreeView({ routes, results }: TreeViewProps) {
                 <p className="font-medium mb-1">About Client Boundaries</p>
                 <p className="mb-2">
                   A client boundary starts when a component has{" "}
-                  <code className="bg-muted px-1 rounded">"use client"</code>.
+                  <code className="bg-muted px-1 rounded">&quot;use client&quot;</code>.
                   All components it imports become client components too.
                 </p>
                 <p className="mb-2">
                   <strong>Layouts are shown separately</strong> because they
-                  don't affect page boundaries. In Next.js, the page is passed
+                  don&apos;t affect page boundaries. In Next.js, the page is passed
                   as <code className="bg-muted px-1 rounded">children</code> to
                   layouts, so each has independent client boundaries.
                 </p>

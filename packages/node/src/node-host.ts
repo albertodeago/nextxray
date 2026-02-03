@@ -15,7 +15,7 @@ const { ResolverFactory, CachedInputFileSystem } = EnhancedResolve;
 // Create a resolver instance that mimics Node.js resolution + TypeScript support
 const resolver = ResolverFactory.createResolver({
   // Use the cached file system to avoid hitting the disk too often
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any - Types are incompatible but it should work
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- types incompatible but works
   fileSystem: new CachedInputFileSystem(fs as any, 4000),
   // Extensions to try when resolving
   extensions: [".ts", ".tsx", ".js", ".jsx", ".json", ".d.ts"],
