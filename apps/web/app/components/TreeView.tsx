@@ -12,6 +12,8 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
+import { InfoIcon } from "@/components/ui/icons";
 
 interface TreeViewProps {
   routes: RouteEntry[];
@@ -67,8 +69,30 @@ export function TreeView({ routes, results }: TreeViewProps) {
               className="inline-block h-3 w-3 rounded-full border-2"
               style={{ borderColor: "#f59e0b" }}
             />
-            Server (but inside a client boundary)
+            Server Component, but rendered as a Client Component
           </span>
+          <Tooltip
+            content={
+              <>
+                <p className="font-medium mb-1">About Client Boundaries</p>
+                <p className="mb-2">
+                  A client boundary starts when a component has{" "}
+                  <code className="bg-muted px-1 rounded">"use client"</code>.
+                  All components it imports become client components too.
+                </p>
+                <p className="mb-2">
+                  <strong>Layouts are shown separately</strong> because they
+                  don't affect page boundaries. In Next.js, the page is passed
+                  as <code className="bg-muted px-1 rounded">children</code> to
+                  layouts, so each has independent client boundaries.
+                </p>
+              </>
+            }
+          >
+            <button className="flex items-center gap-1 hover:text-foreground transition-colors">
+              <InfoIcon className="h-3.5 w-3.5" />
+            </button>
+          </Tooltip>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
